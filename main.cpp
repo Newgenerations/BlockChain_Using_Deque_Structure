@@ -1,50 +1,81 @@
-#include "header/Blockchain.h"
-#include "header/Node.h"
+#include <iostream>
+#include "header/server.h"
+#include "header/database.h"
+#include <fstream>
+#include <json/json.h>
 
 int main()
 {
-    srand(time(0));
+    // Read configuration
+    std::ifstream config_file("config.json");
+    Json::Value config;
+    config_file >> config;
 
-    // Create two nodes (Simulating P2P network)
-    Node node1(1, 4);
-    Node node2(2, 4);
+    std::string db_name = config["db_name"].asString();
+    std::string server_ip = config["server_ip"].asString();
+    int port = config["port"].asInt();
 
-    // Simulation loop (5 mining cycles)
-    for (int i = 1; i <= 5; i++)
+    Database db(db_name);
+    if (!db.initialize())
     {
-        cout << "\n=====================================";
-        cout << "\n🔄 Simulation Cycle #" << i;
-        cout << "\n=====================================\n";
-
-        // Randomly choose a node to mine
-        int miner = rand() % 2 + 1;
-        string transactionData = "Tx " + to_string(i) + ": Alice -> Bob $" + to_string(rand() % 100);
-
-        if (miner == 1)
-        {
-            node1.mineBlock(transactionData);
-        }
-        else
-        {
-            node2.mineBlock(transactionData);
-        }
-
-        // Nodes sync to maintain longest chain
-        node1.syncBlockchain(node2);
-        node2.syncBlockchain(node1);
-
-        // Show blockchain state
-        node1.showBlockchain();
-
-        // 🕒 Simulate delay
-        this_thread::sleep_for(chrono::seconds(2));
+        return -1;
     }
 
-    cout << "\n📌 Final Blockchain State:";
-    node1.showBlockchain();
+    db.createTables();
+
+    Server server(server_ip, port, db);
+    server.start();
 
     return 0;
 }
+
+// #include "header/Blockchain.h"
+// #include "header/Node.h"
+
+// int main()
+// {
+//     srand(time(0));
+
+//     // Create two nodes (Simulating P2P network)
+//     Node node1(1, 4);
+//     Node node2(2, 4);
+
+//     // Simulation loop (5 mining cycles)
+//     for (int i = 1; i <= 5; i++)
+//     {
+//         cout << "\n=====================================";
+//         cout << "\n🔄 Simulation Cycle #" << i;
+//         cout << "\n=====================================\n";
+
+//         // Randomly choose a node to mine
+//         int miner = rand() % 2 + 1;
+//         string transactionData = "Tx " + to_string(i) + ": Alice -> Bob $" + to_string(rand() % 100);
+
+//         if (miner == 1)
+//         {
+//             node1.mineBlock(transactionData);
+//         }
+//         else
+//         {
+//             node2.mineBlock(transactionData);
+//         }
+
+//         // Nodes sync to maintain longest chain
+//         node1.syncBlockchain(node2);
+//         node2.syncBlockchain(node1);
+
+//         // Show blockchain state
+//         node1.showBlockchain();
+
+//         // 🕒 Simulate delay
+//         this_thread::sleep_for(chrono::seconds(2));
+//     }
+
+//     cout << "\n📌 Final Blockchain State:";
+//     node1.showBlockchain();
+
+//     return 0;
+// }
 
 // #include <iostream>
 // #include <thread>
